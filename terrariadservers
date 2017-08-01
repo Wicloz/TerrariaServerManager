@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MAINDIR="."
+MAINDIR="/opt/terraria"
 WORLDDIR="$MAINDIR/worlds"
 SERVERDIR="$MAINDIR/server"
 
@@ -9,16 +9,35 @@ error() {
   echo "  $1" 1>&2
 }
 
+isworldrunning() {
+  (screen -list | grep -q "terraria-$1") &>/dev/null
+  return $?
+}
+
+getworlds() {
+  if [ -z "$1" ]; then
+    ls "$WORLDDIR" 2>/dev/null
+  else
+    echo "$1"
+  fi
+}
+
 start() {
   if [ ! -d "$WORLDDIR/$1" ]; then
     error "World not found"
     return 1
   fi
-  return 0
+
+  if ! isworldrunning "$1"; then
+    screen -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+  fi
 }
 
 stop() {
-  return 0
+  if isworldrunning "$1"; then
+    send "$1" "exit"
+    return $?
+  fi
 }
 
 create() {
@@ -29,18 +48,32 @@ create() {
 
   mkdir -p "$WORLDDIR/$1"
   cp "$MAINDIR/defaultserverconfig.txt" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s/^\s*#*\s*\(worldname\s*=\s*\).*$/\1$1/" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s/^\s*#*\s*\(autocreate\s*=\s*\).*$/\1$2/" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s/^\s*#*\s*\(difficulty\s*=\s*\).*$/\1$3/" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s/^\s*#*\s*\(port\s*=\s*\).*$/\1$4/" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(world\s*=\s*\).*$|\1$WORLDDIR/$1/world.wld|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(worldpath\s*=\s*\).*$|\1$WORLDDIR/$1/|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(worldname\s*=\s*\).*$|\1$1|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(autocreate\s*=\s*\).*$|\1$2|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(difficulty\s*=\s*\).*$|\1$3|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(port\s*=\s*\).*$|\1$4|" "$WORLDDIR/$1/serverconfig.txt"
 }
 
 send() {
-  return 0
+  if ! isworldrunning "$1"; then
+    error "World not running"
+    return 1
+  fi
+
+  screen -S "terraria-$1" -X stuff "$2\r"
 }
 
 attach() {
-  return 0
+  if ! isworldrunning $1; then
+    error "World not running"
+    return 1
+  fi
+
+  printf "\n  "
+  script /dev/null -qc "screen -r \"terraria-$1\""
+  return 1
 }
 
 update() {
@@ -54,14 +87,6 @@ update() {
   rm -rf "$SERVERDIR.tmp"
   chmod +x "$SERVERDIR/TerrariaServer.bin.x86"
   chmod +x "$SERVERDIR/TerrariaServer.bin.x86_64"
-}
-
-getworlds() {
-  if [ -z "$1" ]; then
-    ls "$WORLDDIR" 2>/dev/null
-  else
-    echo "$1"
-  fi
 }
 
 case "$1" in
@@ -148,7 +173,14 @@ case "$1" in
       exit 1
     fi
 
-    attach "$2"
+    FAILED="false"
+    printf "Attaching to '$2'"
+    if ! attach "$2"; then
+      FAILED="true"
+    fi
+    if ! $FAILED; then
+      printf "\n"
+    fi
   ;;
 
   create)

@@ -18,5 +18,6 @@ cd /opt/terraria
 if [ "$USER_NAME" = "$(whoami)" ]; then
   terrariaservers $@
 else
-  sudo -u $USER_NAME terrariaservers $@
+  sudo -iu $USER_NAME terrariaservers $@
+  exit
 fi
