@@ -36,7 +36,12 @@ create() {
     error "Server already exists"
     return 1
   fi
+
   mkdir -p "$SERVERDIR/$1"
+  cp "defaultserverconfig.txt" "$SERVERDIR/$1/serverconfig.txt"
+  sed -i "s/^#*\s*\(autocreate\s*=\s*\).*$/\1$2/" "$SERVERDIR/$1/serverconfig.txt"
+  sed -i "s/^#*\s*\(difficulty\s*=\s*\).*$/\1$3/" "$SERVERDIR/$1/serverconfig.txt"
+  sed -i "s/^#*\s*\(port\s*=\s*\).*$/\1$4/" "$SERVERDIR/$1/serverconfig.txt"
   update "$1"
 }
 
@@ -128,14 +133,22 @@ case "$1" in
       echo "Enter a name for the new server"
       exit 1
     fi
-    PORT="$3"
+    if [[ "$3" != "1" && "$3" != "2" && "$3" != "3" ]]; then
+      echo "Enter a valid size for the new server (1, 2, 3)"
+      exit 1
+    fi
+    if [[ "$4" != "0" && "$4" != "1" ]]; then
+      echo "Enter a valid difficulty for the new server (0, 1)"
+      exit 1
+    fi
+    PORT="$5"
     if [ -z "$PORT" ]; then
-      PORT="3000"
+      PORT="7777"
     fi
 
     FAILED="false"
     printf "Creating server: $2"
-    if ! create "$2" "$PORT"; then
+    if ! create "$2" "$3" "$4" "$PORT"; then
       FAILED="true"
     fi
     if ! $FAILED; then
