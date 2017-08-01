@@ -39,10 +39,11 @@ create() {
 
   mkdir -p "$SERVERDIR/$1"
   cp "defaultserverconfig.txt" "$SERVERDIR/$1/serverconfig.txt"
-  sed -i "s/^#*\s*\(autocreate\s*=\s*\).*$/\1$2/" "$SERVERDIR/$1/serverconfig.txt"
-  sed -i "s/^#*\s*\(difficulty\s*=\s*\).*$/\1$3/" "$SERVERDIR/$1/serverconfig.txt"
-  sed -i "s/^#*\s*\(port\s*=\s*\).*$/\1$4/" "$SERVERDIR/$1/serverconfig.txt"
+  sed -i "s/^\s*#*\s*\(autocreate\s*=\s*\).*$/\1$2/" "$SERVERDIR/$1/serverconfig.txt"
+  sed -i "s/^\s*#*\s*\(difficulty\s*=\s*\).*$/\1$3/" "$SERVERDIR/$1/serverconfig.txt"
+  sed -i "s/^\s*#*\s*\(port\s*=\s*\).*$/\1$4/" "$SERVERDIR/$1/serverconfig.txt"
   update "$1"
+  return $?
 }
 
 getservers() {
