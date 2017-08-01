@@ -1,5 +1,6 @@
 TERRARIA_USER := terraria
 TERRARIA_HOME := /opt/terraria
+TERRARIA_CONFIG := /opt/terraria/defaultserverconfig.txt
 TERRARIASERVERS := /usr/local/bin/terrariaservers
 TERRARIAD := /usr/local/bin/terrariad
 TERRARIA_INIT_D := /etc/init.d/terrariad
@@ -11,6 +12,7 @@ install: update
 		useradd --system --user-group --create-home --home $(TERRARIA_HOME) $(TERRARIA_USER); \
 	fi
 	sudo -u $(TERRARIA_USER) mkdir -p $(TERRARIA_HOME)/servers
+	install -m 0644 -o $(TERRARIA_USER) -g $(TERRARIA_USER) defaultserverconfig.txt $(TERRARIA_CONFIG)
 	if which systemctl; then \
 		systemctl -f enable terrariad.service; \
 	else \
@@ -22,6 +24,9 @@ update:
 	install -m 0755 terrariaservers $(TERRARIASERVERS)
 	install -m 0755 terrariad $(TERRARIAD)
 	install -m 0644 terrariad.completion $(TERRARIA_COMPLETION)
+	if [ -e $(TERRARIA_HOME) ]; then \
+		install -m 0644 -o $(TERRARIA_USER) -g $(TERRARIA_USER) defaultserverconfig.txt $(TERRARIA_CONFIG); \
+	fi
 	if which systemctl; then \
 		install -m 0644 terrariad.service $(TERRARIA_SERVICE); \
 		systemctl daemon-reload; \
@@ -35,7 +40,7 @@ clean:
 		update-rc.d terrariad remove; \
 		rm -f $(TERRARIA_INIT_D); \
 	fi
-	rm -f $(TERRARIASERVERS) $(TERRARIAD) $(TERRARIA_COMPLETION)
+	rm -f $(TERRARIASERVERS) $(TERRARIAD) $(TERRARIA_COMPLETION) $(TERRARIA_CONFIG)
 
 superclean: clean
 	userdel --remove $(TERRARIA_USER);
