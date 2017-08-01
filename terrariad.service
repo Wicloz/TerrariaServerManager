@@ -1,0 +1,14 @@
+[Unit]
+Description=Terraria Server Manager
+Requires=network.target
+After=network.target
+
+[Service]
+User=terraria
+ExecStart=/usr/local/bin/terrariad start
+ExecStop=/usr/local/bin/terrariad stop
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

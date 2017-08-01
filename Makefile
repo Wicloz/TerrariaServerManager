@@ -7,7 +7,10 @@ TERRARIA_SERVICE := /lib/systemd/system/terrariad.service
 TERRARIA_COMPLETION := /etc/bash_completion.d/terrariad
 
 install: update
-	useradd --system --user-group --create-home --home $(TERRARIA_HOME) $(TERRARIA_USER)
+	if [ `grep -c '^$(TERRARIA_USER):' /etc/passwd` = "0" ]; then \
+		useradd --system --user-group --create-home --home $(TERRARIA_HOME) $(TERRARIA_USER); \
+	fi
+	mkdir -p $(TERRARIA_HOME)/servers
 	if which systemctl; then \
 		systemctl -f enable terrariad.service; \
 	else \
