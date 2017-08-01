@@ -1,6 +1,5 @@
 TERRARIA_USER := terraria
 TERRARIA_HOME := /opt/terraria
-
 TERRARIASERVERS := /usr/local/bin/terrariaservers
 TERRARIAD := /usr/local/bin/terrariad
 TERRARIA_INIT_D := /etc/init.d/terrariad
