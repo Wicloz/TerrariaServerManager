@@ -1,0 +1,22 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:       terrariad
+# Required-Start: $remote_fs $syslog
+# Required-Stop:  $remote_fs $syslog
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Description:    Terraria Server Control Script
+### END INIT INFO
+
+# Setup the default user name.
+USER_NAME="terraria"
+
+# Setup the default location.
+cd /opt/terraria
+
+# Run the terrariaservers script.
+if [ "$USER_NAME" = "$(whoami)" ]; then
+  terrariaservers $@
+else
+  sudo -u $USER_NAME terrariaservers $@
+fi
