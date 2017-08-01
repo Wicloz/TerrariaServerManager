@@ -1,64 +1,147 @@
 #!/bin/bash
 
 SERVERDIR="./servers"
-SERVERS="$2"
-if [ -z "$SERVERS" ]; then
-  SERVERS=`ls $SERVERDIR`
-fi
+
+errecho() {
+  echo "$@" 1>&2;
+}
+
+error() {
+  printf "\n"
+  errecho "  $1"
+}
 
 start() {
-  printf "Starting server '$1'"
-  printf " (Success!)\n"
+  if [ ! -d "$SERVERDIR/$1" ]; then
+    error "Server not found"
+    return 1
+  fi
+  return 0
 }
 
 stop() {
-  printf "Stopping server '$1'"
-  printf " (Success!)\n"
+  return 0
 }
 
 update() {
-  printf "Updating server '$1'"
-  printf " (Success!)\n"
+  if [ ! -d "$SERVERDIR/$1" ]; then
+    error "Server not found"
+    return 1
+  fi
+  return 0
 }
 
 create() {
-  printf "Creating server '$1'"
+  if [ -e "$SERVERDIR/$1" ]; then
+    error "Server already exists"
+    return 1
+  fi
   mkdir -p "$SERVERDIR/$1"
-  printf " (Success!)\n"
+  update "$1"
+}
+
+getservers() {
+  if [ -z "$1" ]; then
+    ls $SERVERDIR
+  else
+    echo "$1"
+  fi
 }
 
 case "$1" in
+
   start)
-  for SERVER in $SERVERS; do
-    start "$SERVER"
-  done
+    FAILED="true"
+    for SERVER in `getservers "$2"`; do
+      if $FAILED; then
+        printf "Starting server: "
+        FAILED="false"
+      fi
+      printf "$SERVER "
+      if ! start "$SERVER"; then
+        FAILED="true"
+      fi
+    done
+    if ! $FAILED; then
+      printf "\n"
+    fi
   ;;
+
   stop)
-  for SERVER in $SERVERS; do
-    stop "$SERVER"
-  done
+    FAILED="true"
+    for SERVER in `getservers "$2"`; do
+      if $FAILED; then
+        printf "Stopping server: "
+        FAILED="false"
+      fi
+      printf "$SERVER "
+      if ! stop "$SERVER"; then
+        FAILED="true"
+      fi
+    done
+    if ! $FAILED; then
+      printf "\n"
+    fi
   ;;
+
   restart)
-  for SERVER in $SERVERS; do
-    stop "$SERVER"
-    start "$SERVER"
-  done
+    FAILED="true"
+    for SERVER in `getservers "$2"`; do
+      if $FAILED; then
+        printf "Restarting server: "
+        FAILED="false"
+      fi
+      printf "$SERVER "
+      if ! stop "$SERVER"; then
+        FAILED="true"
+      fi
+      if ! $FAILED; then
+        if ! start "$SERVER"; then
+          FAILED="true"
+        fi
+      fi
+    done
+    if ! $FAILED; then
+      printf "\n"
+    fi
   ;;
+
   update)
-  for SERVER in $SERVERS; do
-    update "$SERVER"
-  done
+    FAILED="true"
+    for SERVER in `getservers "$2"`; do
+      if $FAILED; then
+        printf "Updating server: "
+        FAILED="false"
+      fi
+      printf "$SERVER "
+      if ! update "$SERVER"; then
+        FAILED="true"
+      fi
+    done
+    if ! $FAILED; then
+      printf "\n"
+    fi
   ;;
+
   create)
-  if [ -z "$2" ]; then
-    echo "Enter a name for the new server."
-    exit 1
-  fi
-  PORT="$3"
-  if [ -z "$PORT" ]; then
-    PORT="3000"
-  fi
-  create "$2" "$PORT"
+    if [ -z "$2" ]; then
+      echo "Enter a name for the new server"
+      exit 1
+    fi
+    PORT="$3"
+    if [ -z "$PORT" ]; then
+      PORT="3000"
+    fi
+
+    FAILED="false"
+    printf "Creating server: $2"
+    if ! create "$2" "$PORT"; then
+      FAILED="true"
+    fi
+    if ! $FAILED; then
+      printf "\n"
+    fi
   ;;
+
 esac
 exit 0
