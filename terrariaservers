@@ -1,6 +1,10 @@
 #!/bin/bash
 
-SERVERDIR="./servers"
+WORLDDIR="./worlds"
+LOCALVERSION=`ls server 2>/dev/null`
+if [ -z "$LOCALVERSION" ]; then
+  LOCALVERSION="0"
+fi
 
 errecho() {
   echo "$@" 1>&2;
@@ -12,8 +16,8 @@ error() {
 }
 
 start() {
-  if [ ! -d "$SERVERDIR/$1" ]; then
-    error "Server not found"
+  if [ ! -d "$WORLDDIR/$1" ]; then
+    error "World not found"
     return 1
   fi
   return 0
@@ -24,31 +28,34 @@ stop() {
 }
 
 update() {
-  if [ ! -d "$SERVERDIR/$1" ]; then
-    error "Server not found"
-    return 1
+  DOWNLOAD=`curl -s "https://terraria.gamepedia.com/Server" | perl -pe 's/\n//' | sed 's|.*\(https*://terraria.org/server/.*\.zip\).*|\1|'`
+  REMOTEVERSION=`echo "$DOWNLOAD" | sed 's|.*-\([0-9]*\).zip$|\1|'`
+
+  if [ "$REMOTEVERSION" -gt "$LOCALVERSION" ]; then
+    rm -rf "server"
+    curl -so "server.zip" "$DOWNLOAD"
+    unzip -q "server.zip" -d "server"
+    rm -f "server.zip"
+    LOCALVERSION=`ls server`
   fi
-  return 0
 }
 
 create() {
-  if [ -e "$SERVERDIR/$1" ]; then
-    error "Server already exists"
+  if [ -e "$WORLDDIR/$1" ]; then
+    error "World already exists"
     return 1
   fi
 
-  mkdir -p "$SERVERDIR/$1"
-  cp "defaultserverconfig.txt" "$SERVERDIR/$1/serverconfig.txt"
-  sed -i "s/^\s*#*\s*\(autocreate\s*=\s*\).*$/\1$2/" "$SERVERDIR/$1/serverconfig.txt"
-  sed -i "s/^\s*#*\s*\(difficulty\s*=\s*\).*$/\1$3/" "$SERVERDIR/$1/serverconfig.txt"
-  sed -i "s/^\s*#*\s*\(port\s*=\s*\).*$/\1$4/" "$SERVERDIR/$1/serverconfig.txt"
-  update "$1"
-  return $?
+  mkdir -p "$WORLDDIR/$1"
+  cp "defaultserverconfig.txt" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s/^\s*#*\s*\(autocreate\s*=\s*\).*$/\1$2/" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s/^\s*#*\s*\(difficulty\s*=\s*\).*$/\1$3/" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s/^\s*#*\s*\(port\s*=\s*\).*$/\1$4/" "$WORLDDIR/$1/serverconfig.txt"
 }
 
-getservers() {
+getworlds() {
   if [ -z "$1" ]; then
-    ls $SERVERDIR
+    ls "$WORLDDIR" 2>/dev/null
   else
     echo "$1"
   fi
@@ -58,13 +65,13 @@ case "$1" in
 
   start)
     FAILED="true"
-    for SERVER in `getservers "$2"`; do
+    for WORLD in `getworlds "$2"`; do
       if $FAILED; then
-        printf "Starting server: "
+        printf "Starting world: "
         FAILED="false"
       fi
-      printf "$SERVER "
-      if ! start "$SERVER"; then
+      printf "$WORLD "
+      if ! start "$WORLD"; then
         FAILED="true"
       fi
     done
@@ -75,13 +82,13 @@ case "$1" in
 
   stop)
     FAILED="true"
-    for SERVER in `getservers "$2"`; do
+    for WORLD in `getworlds "$2"`; do
       if $FAILED; then
-        printf "Stopping server: "
+        printf "Stopping world: "
         FAILED="false"
       fi
-      printf "$SERVER "
-      if ! stop "$SERVER"; then
+      printf "$WORLD "
+      if ! stop "$WORLD"; then
         FAILED="true"
       fi
     done
@@ -92,17 +99,17 @@ case "$1" in
 
   restart)
     FAILED="true"
-    for SERVER in `getservers "$2"`; do
+    for WORLD in `getworlds "$2"`; do
       if $FAILED; then
-        printf "Restarting server: "
+        printf "Restarting world: "
         FAILED="false"
       fi
-      printf "$SERVER "
-      if ! stop "$SERVER"; then
+      printf "$WORLD "
+      if ! stop "$WORLD"; then
         FAILED="true"
       fi
       if ! $FAILED; then
-        if ! start "$SERVER"; then
+        if ! start "$WORLD"; then
           FAILED="true"
         fi
       fi
@@ -113,33 +120,33 @@ case "$1" in
   ;;
 
   update)
-    FAILED="true"
-    for SERVER in `getservers "$2"`; do
-      if $FAILED; then
-        printf "Updating server: "
-        FAILED="false"
-      fi
-      printf "$SERVER "
-      if ! update "$SERVER"; then
+    FAILED="false"
+    if ! "$0" stop; then
+      FAILED="true"
+    fi
+    if ! $FAILED; then
+      printf "Updating server..."
+      if ! update; then
         FAILED="true"
       fi
-    done
+    fi
     if ! $FAILED; then
       printf "\n"
+      "$0" start
     fi
   ;;
 
   create)
     if [ -z "$2" ]; then
-      echo "Enter a name for the new server"
+      echo "Enter a name for the new world"
       exit 1
     fi
     if [[ "$3" != "1" && "$3" != "2" && "$3" != "3" ]]; then
-      echo "Enter a valid size for the new server (1, 2, 3)"
+      echo "Enter a valid size for the new world (1, 2, 3)"
       exit 1
     fi
     if [[ "$4" != "0" && "$4" != "1" ]]; then
-      echo "Enter a valid difficulty for the new server (0, 1)"
+      echo "Enter a valid difficulty for the new world (0, 1)"
       exit 1
     fi
     PORT="$5"
@@ -148,7 +155,7 @@ case "$1" in
     fi
 
     FAILED="false"
-    printf "Creating server: $2"
+    printf "Creating world: $2"
     if ! create "$2" "$3" "$4" "$PORT"; then
       FAILED="true"
     fi
