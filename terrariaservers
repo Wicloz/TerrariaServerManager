@@ -35,6 +35,14 @@ create() {
   sed -i "s/^\s*#*\s*\(port\s*=\s*\).*$/\1$4/" "$WORLDDIR/$1/serverconfig.txt"
 }
 
+send() {
+  return 0
+}
+
+attach() {
+  return 0
+}
+
 update() {
   rm -rf "$SERVERDIR"
   DOWNLOAD=`curl -s "https://terraria.gamepedia.com/Server" | perl -pe 's/\n//' | sed 's|.*\(https*://terraria.org/server/.*\.zip\).*|\1|'`
@@ -112,6 +120,35 @@ case "$1" in
     if ! $FAILED; then
       printf "\n"
     fi
+  ;;
+
+  send)
+    if [ -z "$2" ]; then
+      echo "Enter the world name to send to"
+      exit 1
+    fi
+    if [ -z "$3" ]; then
+      echo "Enter a command to send"
+      exit 1
+    fi
+
+    FAILED="false"
+    printf "Sending '${*:3}' to '$2'"
+    if ! send "$2" "${*:3}"; then
+      FAILED="true"
+    fi
+    if ! $FAILED; then
+      printf "\n"
+    fi
+  ;;
+
+  attach)
+    if [ -z "$2" ]; then
+      echo "Enter the world name to attach to"
+      exit 1
+    fi
+
+    attach "$2"
   ;;
 
   create)
