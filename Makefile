@@ -18,6 +18,7 @@ install: update
 		ln -s $(TERRARIAD) $(TERRARIA_INIT_D); \
 		update-rc.d terrariad defaults; \
 	fi
+	terrariad update
 
 update:
 	install -m 0755 terrariaservers $(TERRARIASERVERS)
