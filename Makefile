@@ -10,7 +10,7 @@ install: update
 	if [ `grep -c '^$(TERRARIA_USER):' /etc/passwd` = "0" ]; then \
 		useradd --system --user-group --create-home --home $(TERRARIA_HOME) $(TERRARIA_USER); \
 	fi
-	mkdir -p $(TERRARIA_HOME)/servers
+	sudo -u $(TERRARIA_USER) mkdir -p $(TERRARIA_HOME)/servers
 	if which systemctl; then \
 		systemctl -f enable terrariad.service; \
 	else \
@@ -36,3 +36,6 @@ clean:
 		rm -f $(TERRARIA_INIT_D); \
 	fi
 	rm -f $(TERRARIASERVERS) $(TERRARIAD) $(TERRARIA_COMPLETION)
+
+superclean: clean
+	userdel --remove $(TERRARIA_USER);
