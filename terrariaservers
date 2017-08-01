@@ -1,1 +1,64 @@
 #!/bin/bash
+
+SERVERDIR="./servers"
+SERVERS="$2"
+if [ -z "$SERVERS" ]; then
+  SERVERS=`ls $SERVERDIR`
+fi
+
+start() {
+  printf "Starting server '$1'"
+  printf " (Success!)\n"
+}
+
+stop() {
+  printf "Stopping server '$1'"
+  printf " (Success!)\n"
+}
+
+update() {
+  printf "Updating server '$1'"
+  printf " (Success!)\n"
+}
+
+create() {
+  printf "Creating server '$1'"
+  mkdir -p "$SERVERDIR/$1"
+  printf " (Success!)\n"
+}
+
+case "$1" in
+  start)
+  for SERVER in $SERVERS; do
+    start "$SERVER"
+  done
+  ;;
+  stop)
+  for SERVER in $SERVERS; do
+    stop "$SERVER"
+  done
+  ;;
+  restart)
+  for SERVER in $SERVERS; do
+    stop "$SERVER"
+    start "$SERVER"
+  done
+  ;;
+  update)
+  for SERVER in $SERVERS; do
+    update "$SERVER"
+  done
+  ;;
+  create)
+  if [ -z "$2" ]; then
+    echo "Enter a name for the new server."
+    exit 1
+  fi
+  PORT="$3"
+  if [ -z "$PORT" ]; then
+    PORT="3000"
+  fi
+  create "$2" "$PORT"
+  ;;
+esac
+exit 0
