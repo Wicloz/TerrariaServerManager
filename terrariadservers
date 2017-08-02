@@ -21,6 +21,16 @@ isworldstarted() {
   return 1
 }
 
+getworldplayerscurrent() {
+  JOINED=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has joined\.\s*$' | wc -l`
+  LEFT=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has left\.\s*$' | wc -l`
+  echo $(($JOINED-$LEFT))
+}
+
+getworldplayersmax() {
+  cat "$WORLDDIR/$1/serverconfig.txt" | grep '^\s*#*\s*maxplayers\s*=\s*.*$' | sed 's|^\s*#*\s*maxplayers\s*=\s*\(.*\)$|\1|'
+}
+
 getworlds() {
   if [ -z "$1" ]; then
     ls "$WORLDDIR" 2>/dev/null
@@ -42,8 +52,8 @@ start() {
   cd "$WORLDDIR/$1"
   rm -f "$WORLDDIR/$1"/screenlog.*
   if ! screen -L -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""; then
-    error "Could not start server"
     cd "$MAINDIR"
+    error "Could not start server"
     return 1
   fi
   cd "$MAINDIR"
@@ -118,6 +128,25 @@ backup() {
   if ! rdiff-backup --remove-older-than 15D --force "$BACKUPDIR/$1" >> "$WORLDDIR/$1/lastbackup.log"; then
     error "Could not backup server"
     return 1
+  fi
+}
+
+list() {
+  printf "$1: "
+  if isworldstarted "$1"; then
+    echo "started"
+  elif isworldrunning "$1"; then
+    echo "starting/stopping"
+  else
+    echo "stopped"
+  fi
+
+  if [ ! -d "$WORLDDIR/$1" ]; then
+    echo "  World folder not found"
+  else
+    CURRENT=`getworldplayerscurrent "$1"`
+    MAX=`getworldplayersmax "$1"`
+    echo "  $CURRENT of $MAX players online"
   fi
 }
 
@@ -207,6 +236,12 @@ case "$1" in
     for WORLD in `getworlds "$2"`; do
       echo "-- Backing up world: $WORLD"
       backup "$WORLD"
+    done
+  ;;
+
+  list)
+    for WORLD in `getworlds "$2"`; do
+      list "$WORLD"
     done
   ;;
 
