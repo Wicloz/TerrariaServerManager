@@ -88,7 +88,7 @@ forceStop() {
   TIMEOUT="16"
   stop "$1" "$TIMEOUT"
   sleep 1
-  if isworldrunning; then
+  if isworldrunning "$1"; then
     echo "Quitting server screen"
     screen -XS "terraria-$1" quit
     WAIT=0

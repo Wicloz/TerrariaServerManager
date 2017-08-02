@@ -1,7 +1,7 @@
 TERRARIA_USER := terraria
 TERRARIA_HOME := /opt/terraria
 TERRARIA_CONFIG := /opt/terraria/defaultserverconfig.txt
-TERRARIADSERVERS := /usr/local/bin/terrariadservers
+_TERRARIAD := /usr/local/bin/_terrariad
 TERRARIAD := /usr/local/bin/terrariad
 TERRARIA_INIT_D := /etc/init.d/terrariad
 TERRARIA_SERVICE := /lib/systemd/system/terrariad.service
@@ -21,7 +21,7 @@ install: update
 	terrariad update
 
 update:
-	install -m 0755 terrariadservers $(TERRARIADSERVERS)
+	install -m 0755 _terrariad $(_TERRARIAD)
 	install -m 0755 terrariad $(TERRARIAD)
 	install -m 0644 terrariad.completion $(TERRARIA_COMPLETION)
 	if [ -e $(TERRARIA_HOME) ]; then \
@@ -40,7 +40,7 @@ clean:
 		update-rc.d terrariad remove; \
 		rm -f $(TERRARIA_INIT_D); \
 	fi
-	rm -f $(TERRARIADSERVERS) $(TERRARIAD) $(TERRARIA_COMPLETION) $(TERRARIA_CONFIG)
+	rm -f $(_TERRARIAD) $(TERRARIAD) $(TERRARIA_COMPLETION) $(TERRARIA_CONFIG)
 
 superclean: clean
 	userdel --remove $(TERRARIA_USER);
