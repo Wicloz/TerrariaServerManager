@@ -6,11 +6,15 @@ SERVERDIR="$MAINDIR/server"
 BACKUPDIR="$MAINDIR/backups"
 
 error() {
-  printf "\n"
-  printf "  $1" 1>&2
+  echo "$@" 1>&2
 }
 
 isworldrunning() {
+  (screen -list | grep -q "terraria-$1") &>/dev/null
+  return $?
+}
+
+isworldstarted() {
   (screen -list | grep -q "terraria-$1") &>/dev/null
   return $?
 }
@@ -113,8 +117,8 @@ attach() {
     return 1
   fi
 
-  printf "\n  "
   script /dev/null -qc "screen -r \"terraria-$1\""
+  return $?
 }
 
 update() {
@@ -133,81 +137,32 @@ update() {
 case "$1" in
 
   start)
-    FAILED="true"
     for WORLD in `getworlds "$2"`; do
-      if $FAILED; then
-        printf "Starting world: "
-        FAILED="false"
-      fi
-      printf "$WORLD "
-      if ! start "$WORLD"; then
-        printf "\n"
-        FAILED="true"
-      fi
+      echo "-- Starting world: $WORLD"
+      start "$WORLD"
     done
-    if ! $FAILED; then
-      printf "\n"
-    fi
   ;;
 
   stop)
-    FAILED="true"
     for WORLD in `getworlds "$2"`; do
-      if $FAILED; then
-        printf "Stopping world: "
-        FAILED="false"
-      fi
-      printf "$WORLD "
-      if ! stop "$WORLD"; then
-        printf "\n"
-        FAILED="true"
-      fi
+      echo "-- Stopping world: $WORLD"
+      stop "$WORLD"
     done
-    if ! $FAILED; then
-      printf "\n"
-    fi
   ;;
 
   restart)
-    FAILED="true"
     for WORLD in `getworlds "$2"`; do
-      if $FAILED; then
-        printf "Restarting world: "
-        FAILED="false"
-      fi
-      printf "$WORLD "
-      if ! stop "$WORLD"; then
-        printf "\n"
-        FAILED="true"
-      fi
-      if ! $FAILED; then
-        if ! start "$WORLD"; then
-          printf "\n"
-          FAILED="true"
-        fi
+      if "$0" stop "$WORLD"; then
+        "$0" start "$WORLD"
       fi
     done
-    if ! $FAILED; then
-      printf "\n"
-    fi
   ;;
 
   backup)
-    FAILED="true"
     for WORLD in `getworlds "$2"`; do
-      if $FAILED; then
-        printf "Backing up world: "
-        FAILED="false"
-      fi
-      printf "$WORLD "
-      if ! backup "$WORLD"; then
-        printf "\n"
-        FAILED="true"
-      fi
+      echo "-- Backing up world: $WORLD"
+      backup "$WORLD"
     done
-    if ! $FAILED; then
-      printf "\n"
-    fi
   ;;
 
   send)
@@ -220,9 +175,8 @@ case "$1" in
       exit 1
     fi
 
-    printf "Sending '${*:3}' to '$2'"
+    echo "-- Sending '${*:3}' to '$2'"
     send "$2" "${*:3}"
-    printf "\n"
   ;;
 
   attach)
@@ -231,7 +185,7 @@ case "$1" in
       exit 1
     fi
 
-    printf "Attaching to '$2'"
+    echo "-- Attaching to '$2'"
     attach "$2"
   ;;
 
@@ -253,25 +207,16 @@ case "$1" in
       PORT="7777"
     fi
 
-    printf "Creating world: $2"
+    echo "-- Creating world: $2"
     create "$2" "$3" "$4" "$PORT"
-    printf "\n"
   ;;
 
   update)
-    FAILED="false"
-    if ! "$0" stop; then
-      FAILED="true"
-    fi
-    if ! $FAILED; then
-      printf "Updating server..."
-      if ! update; then
-        FAILED="true"
+    if "$0" stop; then
+      echo "Updating server..."
+      if update; then
+        "$0" start
       fi
-    fi
-    printf "\n"
-    if ! $FAILED; then
-      "$0" start
     fi
   ;;
 
