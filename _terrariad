@@ -247,7 +247,25 @@ case "$1" in
   ;;
 
   restart)
-    if "$0" stop; then
+    if [ ! -z "$2" ]; then
+      echo "-- Restarting world: $2"
+      if stop "$2"; then
+        start "$2"
+      fi
+
+    elif "$0" stop; then
+      "$0" start
+    fi
+  ;;
+
+  force-restart)
+    if [ ! -z "$2" ]; then
+      echo "-- Restarting world: $2"
+      if force-stop "$2"; then
+        start "$2"
+      fi
+
+    elif "$0" force-stop; then
       "$0" start
     fi
   ;;
