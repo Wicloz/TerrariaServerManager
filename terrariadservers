@@ -41,6 +41,9 @@ start() {
     error "Could not start server"
     return 1
   fi
+  while ! isworldrunning "$1"; do
+    sleep 1
+  done
 }
 
 stop() {
@@ -49,13 +52,37 @@ stop() {
     return 0
   fi
 
+  WAIT=0
+  while ! isworldstarted "$1" && [[ -z $2 || $WAIT -le $2 ]]; do
+    WAIT=$(($WAIT+1))
+    sleep 1
+  done
   if ! send "$1" "exit"; then
     error "Could not stop server"
     return 1
   fi
-  while isworldrunning "$1"; do
+  WAIT=0
+  while isworldrunning "$1" && [[ -z $2 || $WAIT -le $2 ]]; do
+    WAIT=$(($WAIT+1))
     sleep 1
   done
+
+  screen -XS "terraria-$1" quit
+  WAIT=0
+  while isworldrunning "$1" && [[ -z $2 || $WAIT -le $2 ]]; do
+    WAIT=$(($WAIT+1))
+    sleep 1
+  done
+  screen -XS "terraria-$1" kill
+  WAIT=0
+  while isworldrunning "$1" && [[ -z $2 || $WAIT -le $2 ]]; do
+    WAIT=$(($WAIT+1))
+    sleep 1
+  done
+}
+
+forceStop() {
+  stop "$1" "16"
 }
 
 backup() {
@@ -64,7 +91,7 @@ backup() {
     return 1
   fi
 
-  if isworldrunning "$1"; then
+  if isworldstarted "$1"; then
     if ! send "$1" "save"; then
       error "Could not save server"
       return 1
@@ -100,8 +127,8 @@ create() {
 }
 
 send() {
-  if ! isworldrunning "$1"; then
-    error "World not running"
+  if ! isworldstarted "$1"; then
+    error "World not started"
     return 1
   fi
 
@@ -147,6 +174,13 @@ case "$1" in
     for WORLD in `getworlds "$2"`; do
       echo "-- Stopping world: $WORLD"
       stop "$WORLD"
+    done
+  ;;
+
+  force-stop)
+    for WORLD in `getworlds "$2"`; do
+      echo "-- Stopping world: $WORLD"
+      forceStop "$WORLD"
     done
   ;;
 
@@ -212,7 +246,7 @@ case "$1" in
   ;;
 
   update)
-    if "$0" stop; then
+    if "$0" force-stop; then
       echo "Updating server..."
       if update; then
         "$0" start
