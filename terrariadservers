@@ -7,7 +7,7 @@ BACKUPDIR="$MAINDIR/backups"
 
 error() {
   printf "\n"
-  echo "  $1" 1>&2
+  printf "  $1" 1>&2
 }
 
 isworldrunning() {
@@ -30,19 +30,25 @@ start() {
   fi
   if isworldrunning "$1"; then
     error "World already running"
-    return 1
+    return 0
   fi
 
-  screen -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+  if ! screen -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""; then
+    error "Could not start server"
+    return 1
+  fi
 }
 
 stop() {
   if ! isworldrunning "$1"; then
     error "World not running"
-    return 1
+    return 0
   fi
 
-  send "$1" "exit"
+  if ! send "$1" "exit"; then
+    error "Could not stop server"
+    return 1
+  fi
   while isworldrunning "$1"; do
     sleep 1
   done
@@ -55,13 +61,22 @@ backup() {
   fi
 
   if isworldrunning "$1"; then
-    send "$1" "save"
+    if ! send "$1" "save"; then
+      error "Could not save server"
+      return 1
+    fi
     sleep 5
   fi
 
   mkdir -p "$BACKUPDIR"
-  rdiff-backup --print-statistics "$WORLDDIR/$1" "$BACKUPDIR/$1" > "$WORLDDIR/$1/lastbackup.log"
-  rdiff-backup --remove-older-than 15D --force "$BACKUPDIR/$1" >> "$WORLDDIR/$1/lastbackup.log"
+  if ! rdiff-backup --print-statistics "$WORLDDIR/$1" "$BACKUPDIR/$1" > "$WORLDDIR/$1/lastbackup.log"; then
+    error "Could not backup server"
+    return 1
+  fi
+  if ! rdiff-backup --remove-older-than 15D --force "$BACKUPDIR/$1" >> "$WORLDDIR/$1/lastbackup.log"; then
+    error "Could not backup server"
+    return 1
+  fi
 }
 
 create() {
@@ -86,7 +101,10 @@ send() {
     return 1
   fi
 
-  screen -S "terraria-$1" -X stuff "$2\r"
+  if ! screen -S "terraria-$1" -X stuff "$2\r"; then
+    error "Could not send command"
+    return 1
+  fi
 }
 
 attach() {
@@ -97,7 +115,6 @@ attach() {
 
   printf "\n  "
   script /dev/null -qc "screen -r \"terraria-$1\""
-  return 1
 }
 
 update() {
@@ -124,6 +141,7 @@ case "$1" in
       fi
       printf "$WORLD "
       if ! start "$WORLD"; then
+        printf "\n"
         FAILED="true"
       fi
     done
@@ -141,6 +159,7 @@ case "$1" in
       fi
       printf "$WORLD "
       if ! stop "$WORLD"; then
+        printf "\n"
         FAILED="true"
       fi
     done
@@ -158,10 +177,12 @@ case "$1" in
       fi
       printf "$WORLD "
       if ! stop "$WORLD"; then
+        printf "\n"
         FAILED="true"
       fi
       if ! $FAILED; then
         if ! start "$WORLD"; then
+          printf "\n"
           FAILED="true"
         fi
       fi
@@ -180,6 +201,7 @@ case "$1" in
       fi
       printf "$WORLD "
       if ! backup "$WORLD"; then
+        printf "\n"
         FAILED="true"
       fi
     done
@@ -198,14 +220,9 @@ case "$1" in
       exit 1
     fi
 
-    FAILED="false"
     printf "Sending '${*:3}' to '$2'"
-    if ! send "$2" "${*:3}"; then
-      FAILED="true"
-    fi
-    if ! $FAILED; then
-      printf "\n"
-    fi
+    send "$2" "${*:3}"
+    printf "\n"
   ;;
 
   attach)
@@ -214,14 +231,8 @@ case "$1" in
       exit 1
     fi
 
-    FAILED="false"
     printf "Attaching to '$2'"
-    if ! attach "$2"; then
-      FAILED="true"
-    fi
-    if ! $FAILED; then
-      printf "\n"
-    fi
+    attach "$2"
   ;;
 
   create)
@@ -242,14 +253,9 @@ case "$1" in
       PORT="7777"
     fi
 
-    FAILED="false"
     printf "Creating world: $2"
-    if ! create "$2" "$3" "$4" "$PORT"; then
-      FAILED="true"
-    fi
-    if ! $FAILED; then
-      printf "\n"
-    fi
+    create "$2" "$3" "$4" "$PORT"
+    printf "\n"
   ;;
 
   update)
@@ -263,8 +269,8 @@ case "$1" in
         FAILED="true"
       fi
     fi
+    printf "\n"
     if ! $FAILED; then
-      printf "\n"
       "$0" start
     fi
   ;;
