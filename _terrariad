@@ -39,6 +39,28 @@ getworlds() {
   fi
 }
 
+getworldsRunning() {
+  if [ -z "$1" ]; then
+    screen -list | grep 'terraria-' | sed 's|^.*\.terraria-\([^[:blank:]]*\).*$|\1|' | perl -pe 's/\n/ /' | perl -pe 's/(.*) $/\1\n/'
+  else
+    echo "$1"
+  fi
+}
+
+getworldsStopped() {
+  if [ -z "$1" ]; then
+    WORLDS=""
+    for WORLD in `getworlds`; do
+      if ! isworldrunning "$WORLD"; then
+        WORLDS+="$WORLD "
+      fi
+    done
+    echo "$WORLDS" | perl -pe 's/(.*) $/\1/'
+  else
+    echo "$1"
+  fi
+}
+
 start() {
   if [ ! -d "$WORLDDIR/$1" ]; then
     error "World not found"
@@ -204,32 +226,30 @@ update() {
 case "$1" in
 
   start)
-    for WORLD in `getworlds "$2"`; do
+    for WORLD in `getworldsStopped "$2"`; do
       echo "-- Starting world: $WORLD"
       start "$WORLD"
     done
   ;;
 
   stop)
-    for WORLD in `getworlds "$2"`; do
+    for WORLD in `getworldsRunning "$2"`; do
       echo "-- Stopping world: $WORLD"
       stop "$WORLD"
     done
   ;;
 
   force-stop)
-    for WORLD in `getworlds "$2"`; do
+    for WORLD in `getworldsRunning "$2"`; do
       echo "-- Stopping world: $WORLD"
       forceStop "$WORLD"
     done
   ;;
 
   restart)
-    for WORLD in `getworlds "$2"`; do
-      if "$0" stop "$WORLD"; then
-        "$0" start "$WORLD"
-      fi
-    done
+    if "$0" stop; then
+      "$0" start
+    fi
   ;;
 
   backup)
@@ -298,6 +318,23 @@ case "$1" in
         "$0" start
       fi
     fi
+  ;;
+
+  list-worlds-all)
+    getworlds
+  ;;
+
+  list-worlds-running)
+    getworldsRunning
+  ;;
+
+  list-worlds-stopped)
+    getworldsStopped
+  ;;
+
+  *)
+    error "Unknown command or parameter"
+    exit 1
   ;;
 
 esac
