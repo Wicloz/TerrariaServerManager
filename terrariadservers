@@ -3,6 +3,7 @@
 MAINDIR="/opt/terraria"
 WORLDDIR="$MAINDIR/worlds"
 SERVERDIR="$MAINDIR/server"
+BACKUPDIR="$MAINDIR/backups"
 
 error() {
   printf "\n"
@@ -27,17 +28,40 @@ start() {
     error "World not found"
     return 1
   fi
-
-  if ! isworldrunning "$1"; then
-    screen -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+  if isworldrunning "$1"; then
+    error "World already running"
+    return 1
   fi
+
+  screen -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
 }
 
 stop() {
-  if isworldrunning "$1"; then
-    send "$1" "exit"
-    return $?
+  if ! isworldrunning "$1"; then
+    error "World not running"
+    return 1
   fi
+
+  send "$1" "exit"
+  while isworldrunning "$1"; do
+    sleep 1
+  done
+}
+
+backup() {
+  if [ ! -d "$WORLDDIR/$1" ]; then
+    error "World not found"
+    return 1
+  fi
+
+  if isworldrunning "$1"; then
+    send "$1" "save"
+    sleep 5
+  fi
+
+  mkdir -p "$BACKUPDIR"
+  rdiff-backup --print-statistics "$WORLDDIR/$1" "$BACKUPDIR/$1" > "$WORLDDIR/$1/lastbackup.log"
+  rdiff-backup --remove-older-than 15D --force "$BACKUPDIR/$1" >> "$WORLDDIR/$1/lastbackup.log"
 }
 
 create() {
@@ -140,6 +164,23 @@ case "$1" in
         if ! start "$WORLD"; then
           FAILED="true"
         fi
+      fi
+    done
+    if ! $FAILED; then
+      printf "\n"
+    fi
+  ;;
+
+  backup)
+    FAILED="true"
+    for WORLD in `getworlds "$2"`; do
+      if $FAILED; then
+        printf "Backing up world: "
+        FAILED="false"
+      fi
+      printf "$WORLD "
+      if ! backup "$WORLD"; then
+        FAILED="true"
       fi
     done
     if ! $FAILED; then
