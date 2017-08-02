@@ -15,8 +15,10 @@ isworldrunning() {
 }
 
 isworldstarted() {
-  (screen -list | grep -q "terraria-$1") &>/dev/null
-  return $?
+  if [[ `cat "$WORLDDIR/$1/screenlog.0" | grep '^: .*' | wc -l` -gt "0" && ! `cat "$WORLDDIR/$1/screenlog.0" | grep 'exit' | wc -l` -gt "0" ]]; then
+    return 0
+  fi
+  return 1
 }
 
 getworlds() {
@@ -37,10 +39,14 @@ start() {
     return 0
   fi
 
-  if ! screen -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""; then
+  cd "$WORLDDIR/$1"
+  rm -f "$WORLDDIR/$1"/screenlog.*
+  if ! screen -L -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""; then
     error "Could not start server"
+    cd "$MAINDIR"
     return 1
   fi
+  cd "$MAINDIR"
   while ! isworldrunning "$1"; do
     sleep 1
   done
@@ -66,23 +72,28 @@ stop() {
     WAIT=$(($WAIT+1))
     sleep 1
   done
-
-  screen -XS "terraria-$1" quit
-  WAIT=0
-  while isworldrunning "$1" && [[ -z $2 || $WAIT -le $2 ]]; do
-    WAIT=$(($WAIT+1))
-    sleep 1
-  done
-  screen -XS "terraria-$1" kill
-  WAIT=0
-  while isworldrunning "$1" && [[ -z $2 || $WAIT -le $2 ]]; do
-    WAIT=$(($WAIT+1))
-    sleep 1
-  done
 }
 
 forceStop() {
-  stop "$1" "16"
+  TIMEOUT="16"
+  stop "$1" "$TIMEOUT"
+  sleep 1
+  if isworldrunning; then
+    echo "Quitting server screen"
+    screen -XS "terraria-$1" quit
+    WAIT=0
+    while isworldrunning "$1" && [ $WAIT -le $TIMEOUT ]; do
+      WAIT=$(($WAIT+1))
+      sleep 1
+    done
+    echo "Killing server screen"
+    screen -XS "terraria-$1" kill
+    WAIT=0
+    while isworldrunning "$1" && [ $WAIT -le $TIMEOUT ]; do
+      WAIT=$(($WAIT+1))
+      sleep 1
+    done
+  fi
 }
 
 backup() {
