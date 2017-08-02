@@ -48,7 +48,7 @@ create() {
 
   mkdir -p "$WORLDDIR/$1"
   cp "$MAINDIR/defaultserverconfig.txt" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(world\s*=\s*\).*$|\1$WORLDDIR/$1/world.wld|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(world\s*=\s*\).*$|\1$WORLDDIR/$1/$1.wld|" "$WORLDDIR/$1/serverconfig.txt"
   sed -i "s|^\s*#*\s*\(worldpath\s*=\s*\).*$|\1$WORLDDIR/$1/|" "$WORLDDIR/$1/serverconfig.txt"
   sed -i "s|^\s*#*\s*\(worldname\s*=\s*\).*$|\1$1|" "$WORLDDIR/$1/serverconfig.txt"
   sed -i "s|^\s*#*\s*\(autocreate\s*=\s*\).*$|\1$2|" "$WORLDDIR/$1/serverconfig.txt"
