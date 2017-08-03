@@ -15,7 +15,7 @@ isworldrunning() {
 }
 
 isworldstarted() {
-  if [[ -f "$WORLDDIR/$1/screenlog.0" && `cat "$WORLDDIR/$1/screenlog.0" | grep '^: .*$' | wc -l` -gt "0" && ! `cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*exit\s*$' | wc -l` -gt "0" ]]; then
+  if [[ -f "$WORLDDIR/$1/screenlog.0" && `tail -n 400 "$WORLDDIR/$1/screenlog.0" | grep '^: .*$' | wc -l` -gt "0" && ! `tail -n 400 "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*exit\s*$' | wc -l` -gt "0" ]]; then
     return 0
   fi
   return 1
