@@ -31,6 +31,15 @@ getworldplayerscurrent() {
   echo $(($JOINED-$LEFT))
 }
 
+getworldmemory() {
+  PID=`screen -list | grep "terraria-$1" | sed 's|^\s*\([0-9]*\)\..*$|\1|'`
+  if [ -z $PID ]; then
+    echo "0 kB"
+  else
+    printf "%d kB\n" `ps --no-headers -p $PID -o rss`
+  fi
+}
+
 getworlds() {
   if [ -z "$1" ]; then
     ls "$WORLDDIR" 2>/dev/null
@@ -170,6 +179,8 @@ list() {
     CURRENT=`getworldplayerscurrent "$1"`
     MAX=`getworldoption "$1" "maxplayers"`
     echo "  $CURRENT of $MAX players online"
+    MEMORY=`getworldmemory "$1"`
+    echo "  Used Memory: $MEMORY"
     MOTD=`getworldoption "$1" "motd"`
     echo "  Motd: '$MOTD'"
     SIZE=`getworldoption "$1" "autocreate"`
