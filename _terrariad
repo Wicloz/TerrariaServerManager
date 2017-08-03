@@ -21,14 +21,14 @@ isworldstarted() {
   return 1
 }
 
+getworldoption() {
+  cat "$WORLDDIR/$1/serverconfig.txt" | grep "^\s*#*\s*$2\s*=\s*.*$" | sed "s|^\s*#*\s*$2\s*=\s*\(.*\)$|\1|"
+}
+
 getworldplayerscurrent() {
   JOINED=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has joined\.\s*$' | wc -l`
   LEFT=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has left\.\s*$' | wc -l`
   echo $(($JOINED-$LEFT))
-}
-
-getworldplayersmax() {
-  cat "$WORLDDIR/$1/serverconfig.txt" | grep '^\s*#*\s*maxplayers\s*=\s*.*$' | sed 's|^\s*#*\s*maxplayers\s*=\s*\(.*\)$|\1|'
 }
 
 getworlds() {
@@ -165,10 +165,19 @@ list() {
 
   if [ ! -d "$WORLDDIR/$1" ]; then
     echo "  World folder not found"
+
   else
     CURRENT=`getworldplayerscurrent "$1"`
-    MAX=`getworldplayersmax "$1"`
+    MAX=`getworldoption "$1" "maxplayers"`
     echo "  $CURRENT of $MAX players online"
+    MOTD=`getworldoption "$1" "motd"`
+    echo "  Motd: '$MOTD'"
+    SIZE=`getworldoption "$1" "autocreate"`
+    echo "  Size: '$SIZE'"
+    DIFFICULTY=`getworldoption "$1" "difficulty"`
+    echo "  Difficulty: '$DIFFICULTY'"
+    PORT=`getworldoption "$1" "port"`
+    echo "  Port: '$PORT'"
   fi
 }
 
