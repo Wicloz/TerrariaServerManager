@@ -26,9 +26,13 @@ getworldoption() {
 }
 
 getworldplayerscurrent() {
-  JOINED=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has joined\.\s*$' | wc -l`
-  LEFT=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has left\.\s*$' | wc -l`
-  echo $(($JOINED-$LEFT))
+  if isworldstarted "$1"; then
+    JOINED=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has joined\.\s*$' | wc -l`
+    LEFT=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has left\.\s*$' | wc -l`
+    echo $(($JOINED-$LEFT))
+  else
+    echo "0"
+  fi
 }
 
 getworldmemory() {
