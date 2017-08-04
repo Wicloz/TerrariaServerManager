@@ -322,7 +322,7 @@ case "$1" in
     done
   ;;
 
-  list)
+  status|list|ls)
     for WORLD in `getworlds "$2"`; do
       list "$WORLD"
     done

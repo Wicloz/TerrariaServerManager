@@ -4,7 +4,7 @@ _terrariad() {
   COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
 
   OPTS="
-    start stop force-stop restart force-restart backup list send attach create update
+    start stop force-stop restart force-restart backup status list ls send attach create update
     list-worlds-all list-worlds-running list-worlds-stopped
   "
 
@@ -21,7 +21,7 @@ _terrariad() {
         WORLDS=$($TERRARIAD list-worlds-running)
         COMPREPLY=($(compgen -W "$WORLDS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
-      backup|list)
+      backup|status|list|ls)
         WORLDS=$($TERRARIAD list-worlds-all)
         COMPREPLY=($(compgen -W "$WORLDS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
