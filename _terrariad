@@ -9,8 +9,29 @@ error() {
   echo "$@" 1>&2
 }
 
+SCREEN=`which screen`
+if [ -z "$SCREEN" ]; then
+  error "'screen' not installed"
+  exit 1
+fi
+RDIFF_BACKUP=`which rdiff-backup`
+if [ -z "$RDIFF_BACKUP" ]; then
+  error "'rdiff-backup' not installed"
+  exit 1
+fi
+PERL=`which perl`
+if [ -z "$PERL" ]; then
+  error "'perl' not installed"
+  exit 1
+fi
+UNZIP=`which unzip`
+if [ -z "$UNZIP" ]; then
+  error "'unzip' not installed"
+  exit 1
+fi
+
 isworldrunning() {
-  (screen -list | grep -q "terraria-$1") &>/dev/null
+  ("$SCREEN" -list | grep -q "terraria-$1") &>/dev/null
   return $?
 }
 
@@ -27,8 +48,8 @@ getworldoption() {
 
 getworldplayerscurrent() {
   if isworldstarted "$1"; then
-    JOINED=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has joined\.\s*$' | wc -l`
-    LEFT=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has left\.\s*$' | wc -l`
+    local JOINED=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has joined\.\s*$' | wc -l`
+    local LEFT=`cat "$WORLDDIR/$1/screenlog.0" | grep '^[^<>]*has left\.\s*$' | wc -l`
     echo $(($JOINED-$LEFT))
   else
     echo "0"
@@ -36,7 +57,7 @@ getworldplayerscurrent() {
 }
 
 getworldmemory() {
-  PID=`screen -list | grep "terraria-$1" | sed 's|^\s*\([0-9]*\)\..*$|\1|'`
+  local PID=`"$SCREEN" -list | grep "terraria-$1" | sed 's|^\s*\([0-9]*\)\..*$|\1|'`
   if [ -z $PID ]; then
     echo "0 kB"
   else
@@ -54,7 +75,7 @@ getworlds() {
 
 getworldsRunning() {
   if [ -z "$1" ]; then
-    screen -list | grep 'terraria-' | sed 's|^.*\.terraria-\([^[:blank:]]*\).*$|\1|' | perl -pe 's/\n/ /' | perl -pe 's/(.*) $/\1\n/'
+    "$SCREEN" -list | grep 'terraria-' | sed 's|^.*\.terraria-\([^[:blank:]]*\).*$|\1|' | "$PERL" -pe 's/\n/ /' | "$PERL" -pe 's/(.*) $/\1\n/'
   else
     echo "$1"
   fi
@@ -62,13 +83,13 @@ getworldsRunning() {
 
 getworldsStopped() {
   if [ -z "$1" ]; then
-    WORLDS=""
+    local WORLDS=""
     for WORLD in `getworlds`; do
       if ! isworldrunning "$WORLD"; then
         WORLDS+="$WORLD "
       fi
     done
-    echo "$WORLDS" | perl -pe 's/(.*) $/\1/'
+    echo "$WORLDS" | "$PERL" -pe 's/(.*) $/\1/'
   else
     echo "$1"
   fi
@@ -86,7 +107,7 @@ start() {
 
   cd "$WORLDDIR/$1"
   rm -f "$WORLDDIR/$1"/screenlog.*
-  if ! screen -L -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""; then
+  if ! "$SCREEN" -L -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""; then
     cd "$MAINDIR"
     error "Could not start server"
     return 1
@@ -103,7 +124,7 @@ stop() {
     return 0
   fi
 
-  WAIT=0
+  local WAIT=0
   while ! isworldstarted "$1" && [[ -z $2 || $WAIT -le $2 ]]; do
     WAIT=$(($WAIT+1))
     sleep 1
@@ -120,19 +141,19 @@ stop() {
 }
 
 forceStop() {
-  TIMEOUT="16"
+  local TIMEOUT="16"
   stop "$1" "$TIMEOUT"
   sleep 1
   if isworldrunning "$1"; then
     echo "Quitting server screen"
-    screen -XS "terraria-$1" quit
-    WAIT=0
+    "$SCREEN" -XS "terraria-$1" quit
+    local WAIT=0
     while isworldrunning "$1" && [ $WAIT -le $TIMEOUT ]; do
       WAIT=$(($WAIT+1))
       sleep 1
     done
     echo "Killing server screen"
-    screen -XS "terraria-$1" kill
+    "$SCREEN" -XS "terraria-$1" kill
     WAIT=0
     while isworldrunning "$1" && [ $WAIT -le $TIMEOUT ]; do
       WAIT=$(($WAIT+1))
@@ -156,11 +177,11 @@ backup() {
   fi
 
   mkdir -p "$BACKUPDIR"
-  if ! rdiff-backup --print-statistics "$WORLDDIR/$1" "$BACKUPDIR/$1" > "$WORLDDIR/$1/lastbackup.log"; then
+  if ! "$RDIFF_BACKUP" --print-statistics "$WORLDDIR/$1" "$BACKUPDIR/$1" > "$WORLDDIR/$1/lastbackup.log"; then
     error "Could not backup server"
     return 1
   fi
-  if ! rdiff-backup --remove-older-than 15D --force "$BACKUPDIR/$1" >> "$WORLDDIR/$1/lastbackup.log"; then
+  if ! "$RDIFF_BACKUP" --remove-older-than 15D --force "$BACKUPDIR/$1" >> "$WORLDDIR/$1/lastbackup.log"; then
     error "Could not backup server"
     return 1
   fi
@@ -180,18 +201,18 @@ list() {
     echo "  World folder not found"
 
   else
-    CURRENT=`getworldplayerscurrent "$1"`
-    MAX=`getworldoption "$1" "maxplayers"`
+    local CURRENT=`getworldplayerscurrent "$1"`
+    local MAX=`getworldoption "$1" "maxplayers"`
     echo "  $CURRENT of $MAX players online"
-    MEMORY=`getworldmemory "$1"`
+    local MEMORY=`getworldmemory "$1"`
     echo "  Used Memory: $MEMORY"
-    MOTD=`getworldoption "$1" "motd"`
+    local MOTD=`getworldoption "$1" "motd"`
     echo "  Motd: '$MOTD'"
-    SIZE=`getworldoption "$1" "autocreate"`
+    local SIZE=`getworldoption "$1" "autocreate"`
     echo "  Size: '$SIZE'"
-    DIFFICULTY=`getworldoption "$1" "difficulty"`
+    local DIFFICULTY=`getworldoption "$1" "difficulty"`
     echo "  Difficulty: '$DIFFICULTY'"
-    PORT=`getworldoption "$1" "port"`
+    local PORT=`getworldoption "$1" "port"`
     echo "  Port: '$PORT'"
   fi
 }
@@ -218,7 +239,7 @@ send() {
     return 1
   fi
 
-  if ! screen -S "terraria-$1" -X stuff "$2\r"; then
+  if ! "$SCREEN" -S "terraria-$1" -X stuff "$2\r"; then
     error "Could not send command"
     return 1
   fi
@@ -230,17 +251,17 @@ attach() {
     return 1
   fi
 
-  script /dev/null -qc "screen -r \"terraria-$1\""
+  script /dev/null -qc "\"$SCREEN\" -r \"terraria-$1\""
   return $?
 }
 
 update() {
   rm -rf "$SERVERDIR"
-  DOWNLOAD=`curl -s "https://terraria.gamepedia.com/Server" | perl -pe 's/\n//' | sed 's|.*\(https*://terraria.org/server/.*\.zip\).*|\1|'`
+  local DOWNLOAD=`curl -s "https://terraria.gamepedia.com/Server" | "$PERL" -pe 's/\n//' | sed 's|.*\(https*://terraria.org/server/.*\.zip\).*|\1|'`
   curl -so "$MAINDIR/server.zip" "$DOWNLOAD"
-  unzip -q "$MAINDIR/server.zip" -d "$SERVERDIR.tmp"
+  "$UNZIP" -q "$MAINDIR/server.zip" -d "$SERVERDIR.tmp"
   rm -f "$MAINDIR/server.zip"
-  VERSIONFOLDER=`ls "$SERVERDIR.tmp"`
+  local VERSIONFOLDER=`ls "$SERVERDIR.tmp"`
   mv "$SERVERDIR.tmp/$VERSIONFOLDER/Linux" "$SERVERDIR"
   rm -rf "$SERVERDIR.tmp"
   chmod +x "$SERVERDIR/TerrariaServer.bin.x86"
@@ -344,7 +365,7 @@ case "$1" in
       echo "Enter a valid difficulty for the new world (0, 1)"
       exit 1
     fi
-    PORT="$5"
+    local PORT="$5"
     if [ -z "$PORT" ]; then
       PORT="7777"
     fi
