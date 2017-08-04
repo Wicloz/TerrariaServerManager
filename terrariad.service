@@ -6,7 +6,7 @@ After=network.target
 [Service]
 User=terraria
 ExecStart=/usr/local/bin/terrariad start
-ExecStop=/usr/local/bin/terrariad stop
+ExecStop=/usr/local/bin/terrariad force-stop
 Type=oneshot
 RemainAfterExit=yes
 

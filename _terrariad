@@ -375,10 +375,15 @@ case "$1" in
   ;;
 
   update)
-    if "$0" force-stop; then
+    if [ "$2" = "no-restart" ]; then
       echo "Updating server..."
-      if update; then
-        "$0" start
+      update
+    else
+      if "$0" stop; then
+        echo "Updating server..."
+        if update; then
+          "$0" start
+        fi
       fi
     fi
   ;;
