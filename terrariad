@@ -16,8 +16,8 @@ cd /opt/terraria
 
 # Run the main script.
 if [ "$USER_NAME" = "$(whoami)" ]; then
-  _terrariad $@
+  /usr/local/bin/_terrariad $@
 else
-  sudo -iu $USER_NAME _terrariad $@
+  sudo -iu $USER_NAME /usr/local/bin/_terrariad $@
   exit
 fi
