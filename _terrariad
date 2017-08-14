@@ -115,7 +115,7 @@ start() {
       COMMAND="\"$SERVERDIR/vanilla/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
     ;;
     tmodloader)
-      COMMAND="\"$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+      COMMAND="\"$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\" -modpath \"$WORLDDIR/$1/Mods\""
     ;;
     *)
       error "Could not find configured server type"
