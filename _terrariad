@@ -105,9 +105,24 @@ start() {
     return 0
   fi
 
+  local SERVERTYPE=`getworldoption "$1" "server"`
+  local COMMAND=""
+  case "$SERVERTYPE" in
+    vanilla)
+      COMMAND="\"$SERVERDIR/vanilla/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+    ;;
+    tmodloader)
+      COMMAND="\"$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+    ;;
+    *)
+      error "Could not find configured server type"
+      return 1
+    ;;
+  esac
+
   cd "$WORLDDIR/$1"
   rm -f "$WORLDDIR/$1"/screenlog.*
-  if ! "$SCREEN" -L -dmS "terraria-$1" /bin/bash -c "\"$SERVERDIR/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""; then
+  if ! "$SCREEN" -L -dmS "terraria-$1" /bin/bash -c "$COMMAND"; then
     cd "$MAINDIR"
     error "Could not start server"
     return 1
@@ -228,9 +243,10 @@ create() {
   sed -i "s|^\s*#*\s*\(world\s*=\s*\).*$|\1$WORLDDIR/$1/$1.wld|" "$WORLDDIR/$1/serverconfig.txt"
   sed -i "s|^\s*#*\s*\(worldpath\s*=\s*\).*$|\1$WORLDDIR/$1/|" "$WORLDDIR/$1/serverconfig.txt"
   sed -i "s|^\s*#*\s*\(worldname\s*=\s*\).*$|\1$1|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(autocreate\s*=\s*\).*$|\1$2|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(difficulty\s*=\s*\).*$|\1$3|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(port\s*=\s*\).*$|\1$4|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(server\s*=\s*\).*$|\1$2|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(autocreate\s*=\s*\).*$|\1$3|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(difficulty\s*=\s*\).*$|\1$4|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\(port\s*=\s*\).*$|\1$5|" "$WORLDDIR/$1/serverconfig.txt"
 }
 
 send() {
@@ -256,16 +272,31 @@ attach() {
 }
 
 update() {
-  rm -rf "$SERVERDIR"
-  local DOWNLOAD=`curl -s "https://terraria.gamepedia.com/Server" | "$PERL" -pe 's/\n//' | sed 's|.*\(https*://terraria.org/server/.*\.zip\).*|\1|'`
-  curl -so "$MAINDIR/server.zip" "$DOWNLOAD"
-  "$UNZIP" -q "$MAINDIR/server.zip" -d "$SERVERDIR.tmp"
-  rm -f "$MAINDIR/server.zip"
-  local VERSIONFOLDER=`ls "$SERVERDIR.tmp"`
-  mv "$SERVERDIR.tmp/$VERSIONFOLDER/Linux" "$SERVERDIR"
-  rm -rf "$SERVERDIR.tmp"
-  chmod +x "$SERVERDIR/TerrariaServer.bin.x86"
-  chmod +x "$SERVERDIR/TerrariaServer.bin.x86_64"
+  mkdir -p "$SERVERDIR"
+
+  # Vanilla
+  rm -rf "$SERVERDIR/vanilla"
+  local DOWNLOAD=`curl -Ls "https://terraria.gamepedia.com/Server" | "$PERL" -pe 's/\n//' | sed 's|.*\(https*://terraria.org/server/.*\.zip\).*|\1|'`
+  curl -Lso "$SERVERDIR/vanilla.zip" "$DOWNLOAD"
+  "$UNZIP" -q "$SERVERDIR/vanilla.zip" -d "$SERVERDIR/vanilla.tmp"
+  rm -f "$SERVERDIR/vanilla.zip"
+  local VERSIONFOLDER=`ls "$SERVERDIR/vanilla.tmp"`
+  mv "$SERVERDIR/vanilla.tmp/$VERSIONFOLDER/Linux" "$SERVERDIR/vanilla"
+  rm -rf "$SERVERDIR/vanilla.tmp"
+  chmod +x "$SERVERDIR/vanilla/TerrariaServer.bin.x86"
+  chmod +x "$SERVERDIR/vanilla/TerrariaServer.bin.x86_64"
+
+  # tModLoader
+  rm -rf "$SERVERDIR/tmodloader"
+  cp -a "$SERVERDIR/vanilla" "$SERVERDIR/tmodloader"
+  chmod -x "$SERVERDIR/tmodloader/TerrariaServer.bin.x86"
+  chmod -x "$SERVERDIR/tmodloader/TerrariaServer.bin.x86_64"
+  local DOWNLOAD=`curl -Ls "https://forums.terraria.org/index.php?threads/23726" | "$PERL" -pe 's/\n//' | sed 's|.*<a href="\(.*\)" target="_blank" class="externalLink" rel="nofollow">Linux</a><br/>.*|\1|'`
+  curl -Lso "$SERVERDIR/tmodloader.zip" "$DOWNLOAD"
+  "$UNZIP" -qo "$SERVERDIR/tmodloader.zip" -d "$SERVERDIR/tmodloader"
+  rm -f "$SERVERDIR/tmodloader.zip"
+  chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86"
+  chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64"
 }
 
 case "$1" in
@@ -357,21 +388,25 @@ case "$1" in
       echo "Enter a name for the new world"
       exit 1
     fi
-    if [[ "$3" != "1" && "$3" != "2" && "$3" != "3" ]]; then
+    if [[ "$3" != "vanilla" && "$3" != "tmodloader" ]]; then
+      echo "Enter a valid server type for the new world (vanilla, tmodloader)"
+      exit 1
+    fi
+    if [[ "$4" != "1" && "$4" != "2" && "$4" != "3" ]]; then
       echo "Enter a valid size for the new world (1, 2, 3)"
       exit 1
     fi
-    if [[ "$4" != "0" && "$4" != "1" ]]; then
+    if [[ "$5" != "0" && "$5" != "1" ]]; then
       echo "Enter a valid difficulty for the new world (0, 1)"
       exit 1
     fi
-    local PORT="$5"
+    PORT="$6"
     if [ -z "$PORT" ]; then
       PORT="7777"
     fi
 
     echo "-- Creating world: $2"
-    create "$2" "$3" "$4" "$PORT"
+    create "$2" "$3" "$4" "$5" "$PORT"
   ;;
 
   update)

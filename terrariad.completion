@@ -30,13 +30,21 @@ _terrariad() {
   elif [ $COMP_CWORD -eq 3 ]; then
     case ${COMP_WORDS[COMP_CWORD-2]} in
       create)
-        OPTIONS="1 2 3"
+        OPTIONS="vanilla tmodloader"
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
     esac
 
   elif [ $COMP_CWORD -eq 4 ]; then
     case ${COMP_WORDS[COMP_CWORD-3]} in
+      create)
+        OPTIONS="1 2 3"
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+      ;;
+    esac
+
+  elif [ $COMP_CWORD -eq 5 ]; then
+    case ${COMP_WORDS[COMP_CWORD-4]} in
       create)
         OPTIONS="0 1"
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
