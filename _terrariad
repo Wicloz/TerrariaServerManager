@@ -2,7 +2,7 @@
 
 MAINDIR="/opt/terraria"
 WORLDDIR="$MAINDIR/worlds"
-SERVERDIR="$MAINDIR/server"
+SERVERDIR="$MAINDIR/servers"
 BACKUPDIR="$MAINDIR/backups"
 
 error() {
