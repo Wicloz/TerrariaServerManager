@@ -33,6 +33,7 @@ update:
 	fi
 
 clean:
+	terrariad force-stop
 	if which systemctl; then \
 		systemctl -f disable terrariad.service; \
 		rm -f $(TERRARIA_SERVICE); \
