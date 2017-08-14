@@ -107,6 +107,9 @@ start() {
 
   local SERVERTYPE=`getworldoption "$1" "server"`
   local COMMAND=""
+  if [ -z "$SERVERTYPE" ]; then
+    SERVERTYPE="vanilla"
+  fi
   case "$SERVERTYPE" in
     vanilla)
       COMMAND="\"$SERVERDIR/vanilla/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
