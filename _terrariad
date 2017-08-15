@@ -29,6 +29,11 @@ if [ -z "$UNZIP" ]; then
   error "'unzip' not installed"
   exit 1
 fi
+DOS2UNIX=`which dos2unix`
+if [ -z "$UNZIP" ]; then
+  error "'dos2unix' not installed"
+  exit 1
+fi
 
 isworldrunning() {
   ("$SCREEN" -list | grep -q "terraria-$1") &>/dev/null
@@ -302,15 +307,11 @@ update() {
   chmod -x "$SERVERDIR/tmodloader/TerrariaServer"
   chmod -x "$SERVERDIR/tmodloader/TerrariaServer.bin.x86"
   chmod -x "$SERVERDIR/tmodloader/TerrariaServer.bin.x86_64"
-  curl -Lso "$SERVERDIR/monokickstart.zip" "https://github.com/OutOfOrder/MonoKickstart/archive/master.zip"
-  "$UNZIP" -q "$SERVERDIR/monokickstart.zip" -d "$SERVERDIR/monokickstart.tmp"
-  rm -f "$SERVERDIR/monokickstart.zip"
-  cp -a "$SERVERDIR/monokickstart.tmp/MonoKickstart-master/precompiled"/* "$SERVERDIR/tmodloader"
-  rm -rf "$SERVERDIR/monokickstart.tmp"
-  local DOWNLOAD=`curl -Ls "https://forums.terraria.org/index.php?threads/23726" | "$PERL" -pe 's/\n//' | sed 's|.*<a href="\(.*\)" target="_blank" class="externalLink" rel="nofollow">Linux</a><br/>.*|\1|'`
+  local DOWNLOAD=`curl -Ls "https://forums.terraria.org/index.php?threads/23726" | "$PERL" -pe 's/\n//' | sed 's|.*Direct Download Links:.*<a href="\(.*\)" target="_blank" class="externalLink" rel="nofollow">Linux</a>.*Past Version Downloads.*|\1|'`
   curl -Lso "$SERVERDIR/tmodloader.zip" "$DOWNLOAD"
   "$UNZIP" -qo "$SERVERDIR/tmodloader.zip" -d "$SERVERDIR/tmodloader"
   rm -f "$SERVERDIR/tmodloader.zip"
+  dos2unix "$SERVERDIR/tmodloader/tModLoaderServer"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64"
