@@ -118,10 +118,10 @@ start() {
   fi
   case "$SERVERTYPE" in
     vanilla)
-      COMMAND="\"$SERVERDIR/vanilla/TerrariaServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+      COMMAND="\"$SERVERDIR/vanilla/TerrariaServer\" -config \"$WORLDDIR/$1/serverconfig.txt\""
     ;;
     tmodloader)
-      COMMAND="\"$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64\" -config \"$WORLDDIR/$1/serverconfig.txt\" -modpath \"$WORLDDIR/$1/Mods\""
+      COMMAND="\"$SERVERDIR/tmodloader/tModLoaderServer\" -config \"$WORLDDIR/$1/serverconfig.txt\" -modpath \"$WORLDDIR/$1/Mods\""
     ;;
     *)
       error "Could not find configured server type"
@@ -292,12 +292,14 @@ update() {
   local VERSIONFOLDER=`ls "$SERVERDIR/vanilla.tmp"`
   mv "$SERVERDIR/vanilla.tmp/$VERSIONFOLDER/Linux" "$SERVERDIR/vanilla"
   rm -rf "$SERVERDIR/vanilla.tmp"
+  chmod +x "$SERVERDIR/vanilla/TerrariaServer"
   chmod +x "$SERVERDIR/vanilla/TerrariaServer.bin.x86"
   chmod +x "$SERVERDIR/vanilla/TerrariaServer.bin.x86_64"
 
   # tModLoader
   rm -rf "$SERVERDIR/tmodloader"
   cp -a "$SERVERDIR/vanilla" "$SERVERDIR/tmodloader"
+  chmod -x "$SERVERDIR/tmodloader/TerrariaServer"
   chmod -x "$SERVERDIR/tmodloader/TerrariaServer.bin.x86"
   chmod -x "$SERVERDIR/tmodloader/TerrariaServer.bin.x86_64"
   curl -Lso "$SERVERDIR/monokickstart.zip" "https://github.com/OutOfOrder/MonoKickstart/archive/master.zip"
@@ -309,6 +311,7 @@ update() {
   curl -Lso "$SERVERDIR/tmodloader.zip" "$DOWNLOAD"
   "$UNZIP" -qo "$SERVERDIR/tmodloader.zip" -d "$SERVERDIR/tmodloader"
   rm -f "$SERVERDIR/tmodloader.zip"
+  chmod +x "$SERVERDIR/tmodloader/tModLoaderServer"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64"
 }
