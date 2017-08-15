@@ -117,10 +117,10 @@ start() {
   fi
   case "$SERVERTYPE" in
     vanilla)
-      COMMAND="\"$SERVERDIR/vanilla/TerrariaServer\" -config \"$WORLDDIR/$1/serverconfig.txt\""
+      COMMAND="\"$SERVERDIR/vanilla/TerrariaServer\" -autoarch -config \"$WORLDDIR/$1/serverconfig.txt\""
     ;;
     tmodloader)
-      COMMAND="\"$SERVERDIR/tmodloader/tModLoaderServer\" -config \"$WORLDDIR/$1/serverconfig.txt\" -modpath \"$WORLDDIR/$1/Mods\""
+      COMMAND="\"$SERVERDIR/tmodloader/tModLoaderServer\" -autoarch -config \"$WORLDDIR/$1/serverconfig.txt\" -modpath \"$WORLDDIR/$1/Mods\""
     ;;
     *)
       error "Could not find configured server type"
