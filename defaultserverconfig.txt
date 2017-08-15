@@ -25,7 +25,10 @@
 #remove the # in front of commands to enable them.
 
 #Select the type of server to run.
-server=vanilla
+#server=vanilla
+
+#[tModLoader] Set an optional link to a modpack zip.
+#modpackdownload=
 
 #Load a world and automatically start the server.
 #world=<>

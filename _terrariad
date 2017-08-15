@@ -78,6 +78,20 @@ getworlds() {
   fi
 }
 
+getworldsServertype() {
+  if [ -z "$2" ]; then
+    local WORLDS=""
+    for WORLD in `getworlds`; do
+      if [ `getworldoption "$WORLD" "server"` = "$1" ]; then
+        WORLDS+="$WORLD "
+      fi
+    done
+    echo "$WORLDS" | "$PERL" -pe 's/(.*) $/\1/'
+  else
+    echo "$2"
+  fi
+}
+
 getworldsRunning() {
   if [ -z "$1" ]; then
     "$SCREEN" -list | grep 'terraria-' | sed 's|^.*\.terraria-\([^[:blank:]]*\).*$|\1|' | "$PERL" -pe 's/\n/ /' | "$PERL" -pe 's/(.*) $/\1\n/'
@@ -279,6 +293,38 @@ attach() {
   return $?
 }
 
+updateMods() {
+  if [ `getworldoption "$1" "server"` != "tmodloader" ]; then
+    error "Not a modded world"
+    return 1
+  fi
+  if [ -z `getworldoption "$1" "modpackdownload"` ]; then
+    error "No modpack link provided"
+    return 1
+  fi
+
+  local STARTED="false"
+  if isworldrunning "$1"; then
+    STARTED="true"
+    echo "--Stopping world: $1"
+    stop "$1"
+  fi
+
+  echo "-- Updating mods for: $WORLD"
+  rm -rf "$WORLDDIR/$1/Mods"
+  if ! curl -Lso "$WORLDDIR/$1/Mods.zip" "`getworldoption "$1" "modpackdownload"`"; then
+    rm -f "$WORLDDIR/$1/Mods.zip"
+    return 1
+  fi
+  "$UNZIP" -q "$WORLDDIR/$1/Mods.zip" -d "$WORLDDIR/$1/Mods"
+  rm -f "$WORLDDIR/$1/Mods.zip"
+
+  if $STARTED; then
+    echo "--Starting world: $1"
+    start "$1"
+  fi
+}
+
 update() {
   mkdir -p "$SERVERDIR"
 
@@ -435,8 +481,22 @@ case "$1" in
     fi
   ;;
 
+  update-mods)
+    for WORLD in `getworldsServertype "tmodloader" "$2"`; do
+      updateMods "$WORLD"
+    done
+  ;;
+
   list-worlds-all)
     getworlds
+  ;;
+
+  list-worlds-servertype)
+    if [ -z "$2" ]; then
+      echo "Enter a server type"
+      exit 1
+    fi
+    getworldsServertype "$2"
   ;;
 
   list-worlds-running)
