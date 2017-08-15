@@ -305,7 +305,7 @@ update() {
   curl -Lso "$SERVERDIR/tmodloader.zip" "$DOWNLOAD"
   "$UNZIP" -qo "$SERVERDIR/tmodloader.zip" -d "$SERVERDIR/tmodloader"
   rm -f "$SERVERDIR/tmodloader.zip"
-  dos2unix "$SERVERDIR/tmodloader/tModLoaderServer"
+  dos2unix -q "$SERVERDIR/tmodloader/tModLoaderServer"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86"
   chmod +x "$SERVERDIR/tmodloader/tModLoaderServer.bin.x86_64"
