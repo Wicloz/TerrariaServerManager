@@ -66,13 +66,7 @@ getworldmemory() {
   if [ -z $PID ]; then
     echo "0 kB"
   else
-    local MEMORY=`ps --no-headers -p $PID -o rss`
-    local SCREENCODE=`ps -aux | grep "config /opt/terraria/worlds/$1/serverconfig.txt" | head -n 1 | awk '{print $7}'`
-    local SUBMEMORIES=`ps --no-headers -t $SCREENCODE -o rss`
-    for SUBMEMORY in $SUBMEMORIES; do
-      MEMORY=$(($MEMORY + $SUBMEMORY))
-    done
-    printf "%d kB\n" $MEMORY
+    printf "%d kB\n" `pstree -p $PID | grep -o '([0-9]\+)' | grep -o '[0-9]\+' | xargs ps --no-headers -o rss -p | awk '{memory+=$1} END {print memory}'`
   fi
 }
 
