@@ -42,7 +42,7 @@ _terrariad() {
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
       quickstart)
-        OPTIONS="$($TERRARIAD list-worlds-all) remove"
+        OPTIONS="create remove"
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
     esac
@@ -54,8 +54,10 @@ _terrariad() {
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
       quickstart)
-        OPTIONS="1 2 3"
-        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+        if [ ${COMP_WORDS[COMP_CWORD-1]} = "create" ]; then
+          OPTIONS=$($TERRARIAD list-worlds-all)
+          COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+        fi
       ;;
     esac
 
@@ -66,8 +68,10 @@ _terrariad() {
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
       quickstart)
-        OPTIONS="0 1"
-        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+        if [ ${COMP_WORDS[COMP_CWORD-2]} = "create" ]; then
+          OPTIONS="1 2 3"
+          COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+        fi
       ;;
     esac
 
@@ -76,6 +80,12 @@ _terrariad() {
       create)
         OPTIONS="0 1"
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+      ;;
+      quickstart)
+        if [ ${COMP_WORDS[COMP_CWORD-3]} = "create" ]; then
+          OPTIONS="0 1"
+          COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+        fi
       ;;
     esac
 
