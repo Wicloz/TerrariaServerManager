@@ -73,17 +73,17 @@ getworlds() {
   fi
 }
 
-getworldsServertype() {
-  if [ -z "$2" ]; then
+getworldsWithOption() {
+  if [ -z "$3" ]; then
     local WORLDS=""
     for WORLD in `getworlds`; do
-      if [ `getworldoption "$WORLD" "server"` = "$1" ]; then
+      if [ `getworldoption "$WORLD" "$1"` = "$2" ]; then
         WORLDS+="$WORLD "
       fi
     done
     echo "$WORLDS" | "$PERL" -pe 's/(.*) $/\1/'
   else
-    echo "$2"
+    echo "$3"
   fi
 }
 
@@ -476,7 +476,7 @@ case "$1" in
   ;;
 
   update-mods)
-    for WORLD in `getworldsServertype "tmodloader" "$2"`; do
+    for WORLD in `getworldsWithOption "server" "tmodloader" "$2"`; do
       updateMods "$WORLD"
     done
   ;;
@@ -490,7 +490,7 @@ case "$1" in
       echo "Enter a server type"
       exit 1
     fi
-    getworldsServertype "$2"
+    getworldsWithOption "server" "$2"
   ;;
 
   list-worlds-running)
