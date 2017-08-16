@@ -4,7 +4,7 @@ _terrariad() {
   COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
 
   OPTS="
-    start stop force-stop restart force-restart backup status list ls send attach create update update-mods enable disable
+    start stop force-stop restart force-restart backup status list ls send attach create update update-mods enable disable quickstart
     list-worlds-all list-worlds-running list-worlds-startable list-worlds-servertype list-worlds-enabled list-worlds-disabled
   "
 
@@ -41,6 +41,10 @@ _terrariad() {
         OPTIONS=$($TERRARIAD list-worlds-enabled)
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
+      quickstart)
+        OPTIONS="$($TERRARIAD list-worlds-all) remove"
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+      ;;
     esac
 
   elif [ $COMP_CWORD -eq 3 ]; then
@@ -49,12 +53,20 @@ _terrariad() {
         OPTIONS="vanilla tmodloader"
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
+      quickstart)
+        OPTIONS="1 2 3"
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+      ;;
     esac
 
   elif [ $COMP_CWORD -eq 4 ]; then
     case ${COMP_WORDS[COMP_CWORD-3]} in
       create)
         OPTIONS="1 2 3"
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+      ;;
+      quickstart)
+        OPTIONS="0 1"
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
     esac

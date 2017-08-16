@@ -260,6 +260,14 @@ list() {
 }
 
 create() {
+  if [ "$1" = "quickstart" || "$1" = "remove" ]; then
+    error "World name reserved for quickstart"
+    return 1
+  fi
+  if [ "$5" = "777" ]; then
+    echo "Port reserved for quickstart"
+    return 1
+  fi
   if [ -e "$WORLDDIR/$1" ]; then
     error "World already exists"
     return 1
@@ -328,6 +336,32 @@ updateMods() {
     echo "-- Starting world: $1"
     start "$1"
   fi
+}
+
+quickstartRemove() {
+  if isworldrunning "quickstart"; then
+    echo "-- Stopping world: quickstart"
+    forceStop "quickstart"
+  fi
+  echo "-- Removing world: quickstart"
+  rm -rf "$WORLDDIR/quickstart"
+}
+
+
+quickstartCreate() {
+  quickstartRemove
+
+  echo "-- Creating world: quickstart"
+  cp -a "$WORLDDIR/$1" "$WORLDDIR/quickstart"
+  rm -f "$WORLDDIR/quickstart"/screenlog.*
+  rm -f "$WORLDDIR/quickstart"*.wld
+  rm -f "$WORLDDIR/quickstart"*.wld.bak
+  rm -f "$WORLDDIR/quickstart"*.twld
+  rm -f "$WORLDDIR/quickstart"*.twld.bak
+
+  setworldoption "quickstart" "autocreate" "$2"
+  setworldoption "quickstart" "difficulty" "$3"
+  setworldoption "quickstart" "port" "777"
 }
 
 update() {
@@ -513,6 +547,30 @@ case "$1" in
     fi
     echo "-- Disabling world: $2"
     setworldoption "$2" "state" "disabled"
+  ;;
+
+  quickstart)
+    if [ "$2" = "remove" ]; then
+      quickstartRemove
+      exit 0
+    fi
+
+    if [ -z "$2" ]; then
+      echo "Enter a name for the world to use as a base"
+      exit 1
+    fi
+    if [[ "$3" != "1" && "$3" != "2" && "$3" != "3" ]]; then
+      echo "Enter a valid size for the quickstart world (1, 2, 3)"
+      exit 1
+    fi
+    if [[ "$4" != "0" && "$4" != "1" ]]; then
+      echo "Enter a valid difficulty for the quickstart world (0, 1)"
+      exit 1
+    fi
+
+    quickstartCreate "$2" "$3" "$4"
+    echo "-- Starting world: quickstart"
+    start "quickstart"
   ;;
 
   list-worlds-all)
