@@ -301,7 +301,7 @@ updateMods() {
   local STARTED="false"
   if isworldrunning "$1"; then
     STARTED="true"
-    echo "--Stopping world: $1"
+    echo "-- Stopping world: $1"
     stop "$1"
   fi
 
@@ -315,7 +315,7 @@ updateMods() {
   rm -f "$WORLDDIR/$1/Mods.zip"
 
   if $STARTED; then
-    echo "--Starting world: $1"
+    echo "-- Starting world: $1"
     start "$1"
   fi
 }
