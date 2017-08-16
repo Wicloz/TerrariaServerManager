@@ -43,7 +43,7 @@ isworldstarted() {
 }
 
 setworldoption() {
-  sed -i "s|^\s*#*\s*\($2\)\s*=.*$|\1=$3|" "$WORLDDIR/$1/serverconfig.txt"
+  sed -i "s|^\s*#*\s*\($2\s*=\s*\).*$|\1$3|" "$WORLDDIR/$1/serverconfig.txt"
 }
 
 getworldoption() {
@@ -267,13 +267,13 @@ create() {
 
   mkdir -p "$WORLDDIR/$1"
   cp "$MAINDIR/defaultserverconfig.txt" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(world\s*=\s*\).*$|\1$WORLDDIR/$1/$1.wld|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(worldpath\s*=\s*\).*$|\1$WORLDDIR/$1/|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(worldname\s*=\s*\).*$|\1$1|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(server\s*=\s*\).*$|\1$2|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(autocreate\s*=\s*\).*$|\1$3|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(difficulty\s*=\s*\).*$|\1$4|" "$WORLDDIR/$1/serverconfig.txt"
-  sed -i "s|^\s*#*\s*\(port\s*=\s*\).*$|\1$5|" "$WORLDDIR/$1/serverconfig.txt"
+  setworldoption "$1" "world" "$WORLDDIR/$1/$1.wld"
+  setworldoption "$1" "worldpath" "$WORLDDIR/$1/"
+  setworldoption "$1" "worldname" "$1"
+  setworldoption "$1" "server" "$2"
+  setworldoption "$1" "autocreate" "$3"
+  setworldoption "$1" "difficulty" "$4"
+  setworldoption "$1" "port" "$5"
 }
 
 send() {
