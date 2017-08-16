@@ -30,7 +30,7 @@ if [ -z "$UNZIP" ]; then
   exit 1
 fi
 DOS2UNIX=`which dos2unix`
-if [ -z "$UNZIP" ]; then
+if [ -z "$DOS2UNIX" ]; then
   error "'dos2unix' not installed"
   exit 1
 fi
