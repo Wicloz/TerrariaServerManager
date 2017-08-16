@@ -4,8 +4,8 @@ _terrariad() {
   COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
 
   OPTS="
-    start stop force-stop restart force-restart backup status list ls send attach create update update-mods
-    list-worlds-all list-worlds-running list-worlds-stopped list-worlds-servertype
+    start stop force-stop restart force-restart backup status list ls send attach create update update-mods enable disable
+    list-worlds-all list-worlds-running list-worlds-startable list-worlds-servertype list-worlds-enabled list-worlds-disabled
   "
 
   if [ $COMP_CWORD -eq 1 ]; then
@@ -14,23 +14,31 @@ _terrariad() {
   elif [ $COMP_CWORD -eq 2 ]; then
     case ${COMP_WORDS[COMP_CWORD-1]} in
       start)
-        WORLDS=$($TERRARIAD list-worlds-stopped)
-        COMPREPLY=($(compgen -W "$WORLDS" -- ${COMP_WORDS[COMP_CWORD]}))
+        OPTIONS=$($TERRARIAD list-worlds-startable)
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
       stop|force-stop|restart|force-restart|send|attach)
-        WORLDS=$($TERRARIAD list-worlds-running)
-        COMPREPLY=($(compgen -W "$WORLDS" -- ${COMP_WORDS[COMP_CWORD]}))
+        OPTIONS=$($TERRARIAD list-worlds-running)
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
       backup|status|list|ls)
-        WORLDS=$($TERRARIAD list-worlds-all)
-        COMPREPLY=($(compgen -W "$WORLDS" -- ${COMP_WORDS[COMP_CWORD]}))
+        OPTIONS=$($TERRARIAD list-worlds-all)
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
       update-mods)
-        WORLDS=$($TERRARIAD list-worlds-servertype "tmodloader")
-        COMPREPLY=($(compgen -W "$WORLDS" -- ${COMP_WORDS[COMP_CWORD]}))
+        OPTIONS=$($TERRARIAD list-worlds-servertype "tmodloader")
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
       list-worlds-servertype)
         OPTIONS="vanilla tmodloader"
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+      ;;
+      enable)
+        OPTIONS=$($TERRARIAD list-worlds-disabled)
+        COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
+      ;;
+      disable)
+        OPTIONS=$($TERRARIAD list-worlds-enabled)
         COMPREPLY=($(compgen -W "$OPTIONS" -- ${COMP_WORDS[COMP_CWORD]}))
       ;;
     esac

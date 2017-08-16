@@ -42,6 +42,10 @@ isworldstarted() {
   return 1
 }
 
+setworldoption() {
+  sed -i "s|^\s*#*\s*\($2\)\s*=.*$|\1=$3|" "$WORLDDIR/$1/serverconfig.txt"
+}
+
 getworldoption() {
   cat "$WORLDDIR/$1/serverconfig.txt" | grep "^\s*#*\s*$2\s*=\s*.*$" | sed "s|^\s*#*\s*$2\s*=\s*\(.*\)$|\1|"
 }
@@ -95,11 +99,11 @@ getworldsRunning() {
   fi
 }
 
-getworldsStopped() {
+getworldsStartable() {
   if [ -z "$1" ]; then
     local WORLDS=""
     for WORLD in `getworlds`; do
-      if ! isworldrunning "$WORLD"; then
+      if ! isworldrunning "$WORLD" && [ `getworldoption "$WORLD" "state"` != "disabled" ]; then
         WORLDS+="$WORLD "
       fi
     done
@@ -112,6 +116,10 @@ getworldsStopped() {
 start() {
   if [ ! -d "$WORLDDIR/$1" ]; then
     error "World not found"
+    return 1
+  fi
+  if [ `getworldoption "$1" "state"` = "disabled" ]; then
+    error "World disabled"
     return 1
   fi
   if isworldrunning "$1"; then
@@ -233,6 +241,8 @@ list() {
     echo "  World folder not found"
 
   else
+    local STATE=`getworldoption "$1" "state"`
+    echo "  State: '$STATE'"
     local CURRENT=`getworldplayerscurrent "$1"`
     local MAX=`getworldoption "$1" "maxplayers"`
     echo "  $CURRENT of $MAX players online"
@@ -354,7 +364,7 @@ update() {
 case "$1" in
 
   start)
-    for WORLD in `getworldsStopped "$2"`; do
+    for WORLD in `getworldsStartable "$2"`; do
       echo "-- Starting world: $WORLD"
       start "$WORLD"
     done
@@ -481,8 +491,40 @@ case "$1" in
     done
   ;;
 
+  enable)
+    if [ -z "$2" ]; then
+      echo "Enter a world to enable"
+      exit 1
+    fi
+
+    echo "-- Enabling world: $2"
+    setworldoption "$2" "state" "enabled"
+  ;;
+
+  disable)
+    if [ -z "$2" ]; then
+      echo "Enter a world to disable"
+      exit 1
+    fi
+
+    if isworldrunning "$2"; then
+      echo "-- Stopping world: $2"
+      stop "$2"
+    fi
+    echo "-- Disabling world: $2"
+    setworldoption "$2" "state" "disabled"
+  ;;
+
   list-worlds-all)
     getworlds
+  ;;
+
+  list-worlds-enabled)
+    getworldsWithOption "state" "enabled"
+  ;;
+
+  list-worlds-disabled)
+    getworldsWithOption "state" "disabled"
   ;;
 
   list-worlds-servertype)
@@ -497,8 +539,8 @@ case "$1" in
     getworldsRunning
   ;;
 
-  list-worlds-stopped)
-    getworldsStopped
+  list-worlds-startable)
+    getworldsStartable
   ;;
 
   *)

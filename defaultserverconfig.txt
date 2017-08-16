@@ -30,6 +30,9 @@
 #[tModLoader] Set an optional link to a modpack zip.
 #modpackdownload=
 
+#Determines whether the world can be started by terrariad.
+#state=enabled
+
 #Load a world and automatically start the server.
 #world=<>
 
